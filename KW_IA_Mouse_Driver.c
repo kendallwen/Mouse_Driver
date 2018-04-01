@@ -76,6 +76,8 @@ static int KW_IA_Mouse_Driver_open(struct inode * inode, struct file *file){
     return 0;
 }
 
+
+// got it working for my razer mouse because it happened to be plugged in
 static ssize_t KW_IA_Mouse_Driver_read(struct file *file, char *buffer, size_t len, loff_t *offset){
 		struct input_event *ie = kmalloc(sizeof(struct input_event), GFP_USER);
 		mouseFile = file_open("/dev/input/by-id/usb-Razer_Razer_DeathAdder_2013-event-mouse", 0, 0);
