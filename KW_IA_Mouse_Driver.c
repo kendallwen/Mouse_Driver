@@ -27,6 +27,18 @@ static struct class* kimClass = NULL;
 static struct device* kimDevice = NULL;
 int readNum = 0;
 
+struct mouse_keys{
+	int left;
+	int right;
+	int middle;
+	int forward;
+	int back;
+	int scroll_up;
+	int scroll_down;
+}
+
+static struct mouse_keys * mk = NULL;
+
 struct file* file_open(const char* path, int flags, int rights)
 {
 	struct file* filp = NULL;
@@ -122,16 +134,39 @@ static const struct file_operations KW_IA_Mouse_Driver_fops = {
 };
 
 static int __init KW_IA_Mouse_Driver_init(void){
-	majorNumber = register_chrdev(45, DEVICE_NAME, &KW_IA_Mouse_Driver_fops);
+	majorNumber = register_chrdev(0, DEVICE_NAME, &KW_IA_Mouse_Driver_fops);
     if (majorNumber<0){
         printk(KERN_ALERT "KW_IA_Mouse_Driver FAILD TO REGISTER A MAJOR NUMBER\n");
         return majorNumber;
     }
     printk(KERN_INFO "KW_IA_Mouse_Driver REGISTERED WITH MAJOR NUMBER %d\n", majorNumber);
+	
+	KIMClass = class_create(THIS_MODULE, CLASS_NAME);
+    if(IS_ERR(KIMClass)){
+        unregister_chrdev(majorNumber, DEVICE_NAME);
+        printk(KERN_ALERT "FAILED TO REGISTER DEVICE CLASS\n");
+        return PTR_ERR(KIMClass);
+    }
+    printk(KERN_INFO "KW_IA_Mouse_Driver: DEVICE CLASS REGISTERED CORRECTLY\n");
+
+    KIMDevice = device_create(KIMClass, NULL, MKDEV(majorNumber, 0), NULL, DEVICE_NAME);
+    if(IS_ERR(KIMDevice)){
+        class_destroy(KIMClass);
+        unregister_chrdev(majorNumber, DEVICE_NAME);
+        printk(KERN_ALERT "FAILED TO CREATE THE DEVICE");
+        return PTR_ERR(KIMDevice);
+    }
+    printk(KERN_INFO "KW_IA_Mouse_Driver: DEVICE CLASS CREATED CORRECTLY\n");
+
+	mk = kmalloc(sizeof(struct mouse_keys), GFP_USER);
+
 	return 0;
 }
 
 static void __exit KW_IA_Mouse_Driver_cleanup(void){
+    device_destroy(KIMClass, MKDEV(majorNumber,0));
+    class_unregister(KIMClass);
+    class_destroy(KIMClass);
     unregister_chrdev(majorNumber, DEVICE_NAME);
 }
 
