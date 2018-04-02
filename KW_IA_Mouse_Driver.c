@@ -19,12 +19,14 @@ MODULE_AUTHOR("Kendall Wen and Imdad Ali");
 MODULE_DESCRIPTION("Zelotes mouse driver");
 
 static int majorNumber;
+static struct class* KIMClass = NULL;
+static struct device* KIMDevice = NULL;
 char brightness_buff[10];
 char mouse_buff[sizeof(struct input_event)];
 int type, code, value;
+char mfName[512];
+char kfName[512];
 struct file *mouseFile, *brightnessFile;
-static struct class* kimClass = NULL;
-static struct device* kimDevice = NULL;
 int readNum = 0;
 
 struct mouse_keys{
@@ -35,12 +37,11 @@ struct mouse_keys{
 	int back;
 	int scroll_up;
 	int scroll_down;
-}
+};
 
 static struct mouse_keys * mk = NULL;
 
-struct file* file_open(const char* path, int flags, int rights)
-{
+struct file* file_open(const char* path, int flags, int rights){
 	struct file* filp = NULL;
 	mm_segment_t oldfs;
 	int err = 0;
@@ -56,13 +57,11 @@ struct file* file_open(const char* path, int flags, int rights)
 	return filp;
 }
 
-void file_close(struct file* file)
-{
+void file_close(struct file* file){
 	filp_close(file, NULL);
 }
 
-int file_read(struct file* file, unsigned long long offset, unsigned char* data, unsigned int size)
-{
+int file_read(struct file* file, unsigned long long offset, unsigned char* data, unsigned int size){
 	mm_segment_t oldfs;
 	int ret;
 	oldfs = get_fs();
@@ -72,8 +71,7 @@ int file_read(struct file* file, unsigned long long offset, unsigned char* data,
 	return ret;
 }
 
-int file_write(struct file* file, unsigned long long offset, unsigned char* data, unsigned int size)
-{
+int file_write(struct file* file, unsigned long long offset, unsigned char* data, unsigned int size){
 	mm_segment_t oldfs;
 	int ret;
 	oldfs = get_fs();
@@ -81,6 +79,51 @@ int file_write(struct file* file, unsigned long long offset, unsigned char* data
 	ret = vfs_write(file, data, size, &offset);
 	set_fs(oldfs);
 	return ret;
+}
+
+int numSpace(const char* string, int size){
+	int spaces = 0;
+	int i=0;
+	while(i<size){
+		if(string[i]==' ') spaces++;
+		i++;
+	}
+	return spaces;
+}
+
+int spacePos(const char* string, int size){
+	int i=0;
+	while(i<size){
+		if(string[i]==' ') return i;
+		i++;
+	}
+	return -1;
+}
+
+int setOutput(char * ouput){
+	return -1;
+}
+
+int setValues(struct mouse_keys * mouse, char * input, char * output){
+	if(strcmp("left", input) && setOutput(output)>0){
+		mouse->left = setOutput(output);
+		return 1;
+	}else if(strcmp("right", input) && setOutput(output)>0){
+		mouse->left = setOutput(output);
+		return 2;
+	}else if(strcmp("middle", input) && setOutput(output)>0){
+		mouse->left = setOutput(output);
+		return 3;
+	}else if(strcmp("back", input) && setOutput(output)>0){
+		mouse->left = setOutput(output);
+		return 4;
+	}else if(strcmp("forward", input) && setOutput(output)>0){
+		mouse->left = setOutput(output);
+		return 5;
+	}else{
+		printk("NOT A MOUSE KEY OR VALID KEYBOARD KEY");
+		return 0;
+	}
 }
 
 static int KW_IA_Mouse_Driver_open(struct inode * inode, struct file *file){
@@ -92,33 +135,47 @@ static int KW_IA_Mouse_Driver_open(struct inode * inode, struct file *file){
 // got it working for my razer mouse because it happened to be plugged in
 static ssize_t KW_IA_Mouse_Driver_read(struct file *file, char *buffer, size_t len, loff_t *offset){
 		struct input_event *ie = kmalloc(sizeof(struct input_event), GFP_USER);
-		mouseFile = file_open("/dev/input/by-id/usb-Razer_Razer_DeathAdder_2013-event-mouse", 0, 0);
+		mouseFile = file_open(mfName, 0, 0);
 		char mouse_buff[72];
 		file_read(mouseFile, 0, mouse_buff, 72);
-		brightnessFile = file_open("/sys/class/backlight/intel_backlight/brightness", 0, 0);
-		file_read((struct file*)brightnessFile, 0, brightness_buff, 2);
-		int brightness = 0;
-		brightness = (brightness_buff[0]-'0') * 10;
-		brightness += (brightness_buff[1]-'0');
 		if(mouse_buff[42]+'0'==68 && mouse_buff[44]+'0'==49){
-			if(brightness<95) brightness += 5;
 			printk("forward");
 		}else if(mouse_buff[42]+'0'==67 && mouse_buff[44]+'0'==49){
-			if(brightness>5) brightness-=5;
 			printk("back");
-		}else printk("not forward or back");
-		brightness_buff[0] = brightness/10 + '0';
-		brightness_buff[1] = brightness%10 + '0';
-		printk("brightness: %d", brightness);
-		file_close((struct file*) brightnessFile);
-		brightnessFile = file_open("/sys/class/backlight/intel_backlight/brightness", 1, 0);
-		file_write((struct file*)brightnessFile, 0, brightness_buff, 2);
-		file_close((struct file*)brightnessFile);
+		}else if(mouse_buff[42]+'0'==66 && mouse_buff[44]+'0'==49){
+			printk("middle");
+		}else if(mouse_buff[42]+'0'==65 && mouse_buff[44]+'0'==49){
+			printk("right");
+		}else if(mouse_buff[42]+'0'==64 && mouse_buff[44]+'0'==49){
+			printk("left");
+		}else printk("not a mouse click");
 		file_close((struct file*)mouseFile);
 		return 0;
 }
 
 static ssize_t KW_IA_Mouse_Driver_write(struct file* filep, const char *buff, size_t len, loff_t *off){
+	if(numSpace(buff, len)==0){
+		char *tempName = kmalloc(len, GFP_USER);
+		if(copy_from_user(tempName, buff, len)) return 0;
+		printk("mouse file path: %s", tempName);
+		if(filp_open(tempName, 0, O_RDWR)) {
+			strlcpy(mfName, tempName, len+1);
+			return 1;
+		}
+	}else if(numSpace(buff, len)==1){
+		char *data = kmalloc(len, GFP_USER);
+		copy_from_user(data, buff, len);
+		printk("%s", data);
+		int space = spacePos(buff, len);
+		char input[space+1];
+		strlcpy(input, buff, space+1);
+		buff += space+1;
+		char output[len-space];
+		strlcpy(output, buff, len-space);
+		printk("input: %s output: %s", input, output);
+		if(setValues(mk, input, output)==0) return 0;
+		return 2;
+	}
 	return 0;
 }
 
@@ -140,7 +197,7 @@ static int __init KW_IA_Mouse_Driver_init(void){
         return majorNumber;
     }
     printk(KERN_INFO "KW_IA_Mouse_Driver REGISTERED WITH MAJOR NUMBER %d\n", majorNumber);
-	
+
 	KIMClass = class_create(THIS_MODULE, CLASS_NAME);
     if(IS_ERR(KIMClass)){
         unregister_chrdev(majorNumber, DEVICE_NAME);
@@ -164,6 +221,7 @@ static int __init KW_IA_Mouse_Driver_init(void){
 }
 
 static void __exit KW_IA_Mouse_Driver_cleanup(void){
+	kfree(mk);
     device_destroy(KIMClass, MKDEV(majorNumber,0));
     class_unregister(KIMClass);
     class_destroy(KIMClass);
