@@ -13,6 +13,8 @@ sudo ./device
 The user will be prompted for the path to the mouse input file. This can be found by looking in the /dev/input/by-id/ folder. The file to be used has the name usb-"device name"-event-mouse.
 
 ## Debugging
+
+View problems with the device driver with the command:
 ```
 dmesg
 ```
