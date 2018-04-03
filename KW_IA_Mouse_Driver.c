@@ -30,13 +30,13 @@ struct file *mouseFile, *brightnessFile;
 int readNum = 0;
 
 struct mouse_keys{
-	int left;
-	int right;
-	int middle;
-	int forward;
-	int back;
-	int scroll_up;
-	int scroll_down;
+	struct input_event *left = kmalloc(sizeof(struct input_event));
+	struct input_event *right = kmalloc(sizeof(struct input_event));
+	struct input_event *middle = kmalloc(sizeof(struct input_event));
+	struct input_event *forward = kmalloc(sizeof(struct input_event));
+	struct input_event *back = kmalloc(sizeof(struct input_event));
+	struct input_event *scroll_up = kmalloc(sizeof(struct input_event));
+	struct input_event *scroll_down = kmalloc(sizeof(struct input_event));
 };
 
 static struct mouse_keys * mk = NULL;
@@ -100,28 +100,49 @@ int spacePos(const char* string, int size){
 	return -1;
 }
 
-int setOutput(char * ouput){
+int getType(char * output){
+	return -1;
+}
+
+int getCode(char * ouput){
 	return -1;
 }
 
 int setValues(struct mouse_keys * mouse, char * input, char * output){
-	if(strcmp("left", input) && setOutput(output)>0){
-		mouse->left = setOutput(output);
+	if(getCode(output)<0 || getType(ouput)<0) {
+		printk("NOT VALID SETTING");
+		return 0;
+	}
+	if(strcmp("left", input)){
+		mouse->left->type = getType(output);
+		mouse->left->code = getCode(output);
 		return 1;
-	}else if(strcmp("right", input) && setOutput(output)>0){
-		mouse->left = setOutput(output);
+	}else if(strcmp("right", input)){
+		mouse->rightt->type = getType(output);
+		mouse->right->code = getCode(output);
 		return 2;
-	}else if(strcmp("middle", input) && setOutput(output)>0){
-		mouse->left = setOutput(output);
+	}else if(strcmp("middle", input)){
+		mouse->middle->type = getType(output);
+		mouse->middle->code = getCode(output);
 		return 3;
-	}else if(strcmp("back", input) && setOutput(output)>0){
-		mouse->left = setOutput(output);
+	}else if(strcmp("back", input)){
+		mouse->back->type = getType(output);
+		mouse->back->code = getCode(output);
 		return 4;
-	}else if(strcmp("forward", input) && setOutput(output)>0){
-		mouse->left = setOutput(output);
+	}else if(strcmp("forward", input)){
+		mouse->forward->type = getType(output);
+		mouse->forward->code = getCode(output);
+		return 5;
+	}else if(strcmp("sup", input)){
+		mouse->scroll_up->type = getType(output);
+		mouse->scroll_up->code = getCode(output);
+		return 5;
+	}else if(strcmp("sdown", input)){
+		mouse->scroll_down->type = getType(output);
+		mouse->scroll_down->code = getCode(output);
 		return 5;
 	}else{
-		printk("NOT A MOUSE KEY OR VALID KEYBOARD KEY");
+		printk("NOT A MOUSE KEY");
 		return 0;
 	}
 }
