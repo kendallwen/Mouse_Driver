@@ -20,3 +20,7 @@ View problems with the device driver with the command:
 ```
 dmesg
 ```
+
+## Notes
+
+The driver will not suppress the initial mouse click
