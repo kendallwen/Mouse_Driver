@@ -14,7 +14,7 @@ volatile sig_atomic_t writing = false;
 volatile int fp;
 
 int main(){
-	char *buffer = malloc(512);
+	char *buffer = malloc(1024);
 	fp = open("/dev/KW_IA_Mouse_Driver", O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
 	printf("Please enter the path to the mouse input event file: \n");
 	int ret=0;
@@ -46,7 +46,7 @@ int main(){
 			buffer = strcat(s1, s2);
 			printf("Assigning new mouse key setting\n");
 			writing = true;
-			write(fp, buffer, strlen(buffer));
+			if(write(fp, buffer, strlen(buffer))==0) printf("Unable to assign the key\n");
 			writing = false;
 		}
 	}
