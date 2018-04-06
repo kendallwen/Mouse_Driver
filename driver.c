@@ -25,6 +25,14 @@ int main(){
 		else ret=1;
 	}
 	printf("Succesfully found the mouse input event file\n");
+	// printf("Please enter the path to the keyboard input event file: \n");
+	// ret = 0;
+	// while(ret!=1){
+	// 	scanf("%s", buffer);
+	// 	printf("file path: %s\n", buffer);
+	// 	if(write(fp, buffer, strlen(buffer))!=1) printf("WRONG FILE PATH\n");
+	// 	else ret=1;
+	// }
 	int pid = fork();
 	if(pid<0){
 		int errnum;

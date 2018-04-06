@@ -8,6 +8,7 @@
 #include <linux/unistd.h>
 #include <linux/buffer_head.h>
 #include <linux/input.h>
+#include <linux/delay.h>
 #include <asm/segment.h>
 #include <asm/uaccess.h>
 
@@ -15,8 +16,8 @@
 #define CLASS_NAME "KWIAMD"
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Kendall Wen and Imdad Ali");
-MODULE_DESCRIPTION("Zelotes mouse driver");
+MODULE_AUTHOR("Imdad Ali and Kendall Wen");
+MODULE_DESCRIPTION("Generic 5 button mouse driver");
 
 static int majorNumber;
 static struct class* KIMClass = NULL;
@@ -26,7 +27,7 @@ char mouse_buff[sizeof(struct input_event)];
 int type, code, value;
 char mfName[512];
 char kfName[512];
-struct file *mouseFile, *brightnessFile;
+struct file *mouseFile, *eventFile;
 int readNum = 0;
 
 struct mouse_keys{
@@ -275,18 +276,18 @@ int getCode(char * output){
 		return 81;
 	}else if(strcmp(output, "nenter")==0){
 		return 96;
-	}else if(strcmp(output, "rctrl")==0){
+	}else if(strcmp(output, "lctrl")==0){
 		return 29;
 	}else if(strcmp(output, "windows")==0){
 		return 125;
-	}else if(strcmp(output, "ralt")==0){
+	}else if(strcmp(output, "lalt")==0){
 		return 56;
 	}else if(strcmp(output, "space")==0){
 		return 57;
-	}else if(strcmp(output, "lalt")==0){
+	}else if(strcmp(output, "ralt")==0){
 		return 100;
-	}else if(strcmp(output, "lctrl")==0){
-		return;
+	}else if(strcmp(output, "rctrl")==0){
+		return 97;
 	}else if(strcmp(output, "lkey")==0){
 		return 105;
 	}else if(strcmp(output, "ukey")==0){
@@ -491,18 +492,18 @@ int getType(char * output){
 		return 1;
 	}else if(strcmp(output, "nenter")==0){
 		return 1;
-	}else if(strcmp(output, "rctrl")==0){
+	}else if(strcmp(output, "lctrl")==0){
 		return 1;
 	}else if(strcmp(output, "windows")==0){
 		return 1;
-	}else if(strcmp(output, "ralt")==0){
+	}else if(strcmp(output, "lalt")==0){
 		return 1;
 	}else if(strcmp(output, "space")==0){
 		return 1;
-	}else if(strcmp(output, "lalt")==0){
+	}else if(strcmp(output, "ralt")==0){
 		return 1;
-	}else if(strcmp(output, "lctrl")==0){
-		return;
+	}else if(strcmp(output, "rctrl")==0){
+		return 1;
 	}else if(strcmp(output, "lkey")==0){
 		return 1;
 	}else if(strcmp(output, "ukey")==0){
@@ -707,18 +708,18 @@ int getValue(char * output){
 		return 1;
 	}else if(strcmp(output, "nenter")==0){
 		return 1;
-	}else if(strcmp(output, "rctrl")==0){
+	}else if(strcmp(output, "lctrl")==0){
 		return 1;
 	}else if(strcmp(output, "windows")==0){
 		return 1;
-	}else if(strcmp(output, "ralt")==0){
+	}else if(strcmp(output, "lalt")==0){
 		return 1;
 	}else if(strcmp(output, "space")==0){
 		return 1;
-	}else if(strcmp(output, "lalt")==0){
+	}else if(strcmp(output, "ralt")==0){
 		return 1;
-	}else if(strcmp(output, "lctrl")==0){
-		return;
+	}else if(strcmp(output, "rctrl")==0){
+		return 1;
 	}else if(strcmp(output, "lkey")==0){
 		return 1;
 	}else if(strcmp(output, "ukey")==0){
@@ -754,46 +755,46 @@ int setKey(struct mouse_keys * mouse, char * input, char * output){
 		return 0;
 	}
 	if(strcmp("left", input)==0){
-		mouse->left->type = getType(output);
-		mouse->left->code = getCode(output);
-		mouse->left->value = getValue(output);
-		printk("left set to type: %d, code: %d, value:%d", mouse->left->type, mouse->left->code, mouse->left->value);
+		mk->left->type = getType(output);
+		mk->left->code = getCode(output);
+		mk->left->value = getValue(output);
+		printk("left set to type: %d, code: %d, value:%d", mk->left->type, mk->left->code, mk->left->value);
 		return 1;
 	}else if(strcmp("right", input)==0){
-		mouse->right->type = getType(output);
-		mouse->right->code = getCode(output);
-		mouse->right->value = getValue(output);
-		printk("right set to type: %d, code: %d, value:%d", mouse->right->type, mouse->right->code, mouse->right->value);
+		mk->right->type = getType(output);
+		mk->right->code = getCode(output);
+		mk->right->value = getValue(output);
+		printk("right set to type: %d, code: %d, value:%d", mk->right->type, mk->right->code, mk->right->value);
 		return 2;
 	}else if(strcmp("middle", input)==0){
-		mouse->middle->type = getType(output);
-		mouse->middle->code = getCode(output);
-		mouse->middle->value = getValue(output);
-		printk("middle set to type: %d, code: %d, value:%d", mouse->middle->type, mouse->middle->code, mouse->middle->value);
+		mk->middle->type = getType(output);
+		mk->middle->code = getCode(output);
+		mk->middle->value = getValue(output);
+		printk("middle set to type: %d, code: %d, value:%d", mk->middle->type, mk->middle->code, mk->middle->value);
 		return 3;
 	}else if(strcmp("back", input)==0){
-		mouse->back->type = getType(output);
-		mouse->back->code = getCode(output);
-		mouse->back->value = getValue(output);
-		printk("back set to type: %d, code: %d, value:%d", mouse->back->type, mouse->back->code, mouse->back->value);
+		mk->back->type = getType(output);
+		mk->back->code = getCode(output);
+		mk->back->value = getValue(output);
+		printk("back set to type: %d, code: %d, value:%d", mk->back->type, mk->back->code, mk->back->value);
 		return 4;
 	}else if(strcmp("forward", input)==0){
-		mouse->forward->type = getType(output);
-		mouse->forward->code = getCode(output);
-		mouse->forward->value = getValue(output);
-		printk("forward set to type: %d, code: %d, value:%d", mouse->forward->type, mouse->forward->code, mouse->forward->value);
+		mk->forward->type = getType(output);
+		mk->forward->code = getCode(output);
+		mk->forward->value = getValue(output);
+		printk("forward set to type: %d, code: %d, value:%d", mk->forward->type, mk->forward->code, mk->forward->value);
 		return 5;
 	}else if(strcmp("sup", input)==0){
-		mouse->scroll_up->type = getType(output);
-		mouse->scroll_up->code = getCode(output);
-		mouse->scroll_up->value = getValue(output);
-		printk("scroll up set to type: %d, code: %d, value:%d", mouse->scroll_up->type, mouse->scroll_up->code, mouse->scroll_up->value);
+		mk->scroll_up->type = getType(output);
+		mk->scroll_up->code = getCode(output);
+		mk->scroll_up->value = getValue(output);
+		printk("scroll up set to type: %d, code: %d, value:%d", mk->scroll_up->type, mk->scroll_up->code, mk->scroll_up->value);
 		return 5;
 	}else if(strcmp("sdown", input)==0){
-		mouse->scroll_down->type = getType(output);
-		mouse->scroll_down->code = getCode(output);
-		mouse->scroll_down->value = getValue(output);
-		printk("scroll down set to type: %d, code: %d, value:%d", mouse->scroll_down->type, mouse->scroll_down->code, mouse->scroll_down->value);
+		mk->scroll_down->type = getType(output);
+		mk->scroll_down->code = getCode(output);
+		mk->scroll_down->value = getValue(output);
+		printk("scroll down set to type: %d, code: %d, value:%d", mk->scroll_down->type, mk->scroll_down->code, mk->scroll_down->value);
 		return 5;
 	}else{
 		printk("NOT A MOUSE KEY");
@@ -810,21 +811,115 @@ static int KW_IA_Mouse_Driver_open(struct inode * inode, struct file *file){
 // got it working for my razer mouse because it happened to be plugged in
 static ssize_t KW_IA_Mouse_Driver_read(struct file *file, char *buffer, size_t len, loff_t *offset){
 		struct input_event *ie = kmalloc(sizeof(struct input_event), GFP_USER);
-		mouseFile = file_open(mfName, 0, 0);
+		struct input_event *empty = kmalloc(sizeof(struct input_event), GFP_USER);
+		char * base_event = "/dev/input/event7";
+		ie->value = 0;
+		mouseFile = file_open(mfName, 2, 0);
+		eventFile = file_open(base_event, 1, 0);
 		char mouse_buff[72];
+		unsigned char *output_start = kmalloc(sizeof(struct input_event), GFP_USER);
+		unsigned char *output_end = kmalloc(sizeof(struct input_event), GFP_USER);
+		unsigned char *empty_output = kmalloc(sizeof(struct input_event), GFP_USER);
+		memcpy(empty_output, empty, sizeof(struct input_event));
+		struct timespec *ts = kmalloc(sizeof(struct timespec), GFP_USER);
 		file_read(mouseFile, 0, mouse_buff, 72);
 		if(mouse_buff[42]+'0'==68 && mouse_buff[44]+'0'==49){
+			memcpy(output_start, mk->forward, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_start, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			ie->type = mk->forward->type;
+			ie->code = mk->forward->code;
+			msleep(50);
+			memcpy(output_end, ie, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_end, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
 			printk("forward");
 		}else if(mouse_buff[42]+'0'==67 && mouse_buff[44]+'0'==49){
+			memcpy(output_start, mk->back, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_start, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			ie->type = mk->back->type;
+			ie->code = mk->back->code;
+			msleep(50);
+			memcpy(output_end, ie, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_end, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
 			printk("back");
 		}else if(mouse_buff[42]+'0'==66 && mouse_buff[44]+'0'==49){
+			memcpy(output_start, mk->middle, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_start, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			ie->type = mk->back->type;
+			ie->code = mk->back->code;
+			msleep(50);
+			memcpy(output_end, ie, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_end, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
 			printk("middle");
 		}else if(mouse_buff[42]+'0'==65 && mouse_buff[44]+'0'==49){
+			memcpy(output_start, mk->right, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_start, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			ie->type = mk->right->type;
+			ie->code = mk->right->code;
+			msleep(50);
+			memcpy(output_end, ie, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_end, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
 			printk("right");
 		}else if(mouse_buff[42]+'0'==64 && mouse_buff[44]+'0'==49){
+			memcpy(output_start, mk->left, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_start, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			ie->type = mk->left->type;
+			ie->code = mk->left->code;
+			msleep(50);
+			memcpy(output_end, ie, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_end, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
 			printk("left");
-		}else printk("not a mouse click");
+		}else if(mouse_buff[42]+'0'==56 && mouse_buff[44]+'0'==303){
+			memcpy(output_start, mk->scroll_down, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_start, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			ie->type = mk->scroll_down->type;
+			ie->code = mk->scroll_down->code;
+			msleep(50);
+			memcpy(output_end, ie, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_end, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			printk("scroll down");
+		}else if(mouse_buff[42]+'0'==56 && mouse_buff[44]+'0'==49){
+			memcpy(output_start, mk->scroll_up, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_start, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			ie->type = mk->scroll_up->type;
+			ie->code = mk->scroll_up->code;
+			msleep(50);
+			memcpy(output_end, ie, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, output_end, sizeof(struct input_event));
+			file_write((struct file*) eventFile, 0, empty_output, sizeof(struct input_event));
+			printk("scroll up");
+		}
+		// else printk("not a mouse click");
+		kfree(ts);
+		kfree(ie);
 		file_close((struct file*)mouseFile);
+		file_close((struct file*)eventFile);
 		return 0;
 }
 
