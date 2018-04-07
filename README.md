@@ -85,6 +85,13 @@ numpad 6 key = n6
 numpad 7 key = n7
 numpad 8 key = n8
 numpad 9 key = n9
+left mouse button = mleft
+right mouse button = mright
+scroll wheel click = mmiddle
+mouse side forward button = mforward
+mouse side back button = mback
+scroll up = sup
+scroll down = sdown
 ```
 
 ## Debugging
