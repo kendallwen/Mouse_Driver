@@ -26,7 +26,7 @@ char brightness_buff[10];
 char mouse_buff[sizeof(struct input_event)];
 int type, code, value;
 char mfName[512];
-char kfName[512];
+char efName[512];
 struct file *mouseFile, *eventFile;
 int readNum = 0;
 
@@ -812,10 +812,14 @@ static int KW_IA_Mouse_Driver_open(struct inode * inode, struct file *file){
 static ssize_t KW_IA_Mouse_Driver_read(struct file *file, char *buffer, size_t len, loff_t *offset){
 		struct input_event *ie = kmalloc(sizeof(struct input_event), GFP_USER);
 		struct input_event *empty = kmalloc(sizeof(struct input_event), GFP_USER);
-		char * base_event = "/dev/input/event7";
 		ie->value = 0;
+<<<<<<< HEAD
+		mouseFile = file_open(mfName, 0, 0);
+		eventFile = file_open(efName, 1, 0);
+=======
 		mouseFile = file_open(mfName, 2, 0);
 		eventFile = file_open(mfName, 1, 0);
+>>>>>>> a9251ef64531fe0bd78d21caa61c11b8f17c481c
 		char mouse_buff[72];
 		unsigned char *output_start = kmalloc(sizeof(struct input_event), GFP_USER);
 		unsigned char *output_end = kmalloc(sizeof(struct input_event), GFP_USER);
@@ -924,7 +928,7 @@ static ssize_t KW_IA_Mouse_Driver_read(struct file *file, char *buffer, size_t l
 }
 
 static ssize_t KW_IA_Mouse_Driver_write(struct file* filep, const char *buff, size_t len, loff_t *off){
-	if(numSpace(buff, len)==0){
+	if(numSpace(buff, len)==0 && strstr(mfName, "dev")==NULL){
 		char *tempName = kmalloc(len+1, GFP_USER);
 		if(copy_from_user(tempName, buff, len+1)) return 0;
 		printk("mouse file path: %s", tempName);
@@ -933,7 +937,18 @@ static ssize_t KW_IA_Mouse_Driver_write(struct file* filep, const char *buff, si
 			strlcpy(mfName, tempName, len+1);
 			return 1;
 		}
-	}else if(numSpace(buff, len)==1){
+	}
+	else if(numSpace(buff, len)==0 && strstr(mfName, "dev")){
+		char *tempEName = kmalloc(len+1, GFP_USER);
+		if(copy_from_user(tempEName, buff, len+1)) return 0;
+		printk("output file path: %s", tempEName);
+		if(file_open(tempEName, 0, O_RDWR)) {
+			printk("file opened");
+			strlcpy(efName, tempEName, len+1);
+			return 1;
+		}
+	}
+	else if(numSpace(buff, len)==1){
 		char *data = kmalloc(len+1, GFP_USER);
 		copy_from_user(data, buff, len+1);
 		printk("%s", data);
