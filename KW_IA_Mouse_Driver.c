@@ -813,13 +813,8 @@ static ssize_t KW_IA_Mouse_Driver_read(struct file *file, char *buffer, size_t l
 		struct input_event *ie = kmalloc(sizeof(struct input_event), GFP_USER);
 		struct input_event *empty = kmalloc(sizeof(struct input_event), GFP_USER);
 		ie->value = 0;
-<<<<<<< HEAD
 		mouseFile = file_open(mfName, 0, 0);
 		eventFile = file_open(efName, 1, 0);
-=======
-		mouseFile = file_open(mfName, 2, 0);
-		eventFile = file_open(mfName, 1, 0);
->>>>>>> a9251ef64531fe0bd78d21caa61c11b8f17c481c
 		char mouse_buff[72];
 		unsigned char *output_start = kmalloc(sizeof(struct input_event), GFP_USER);
 		unsigned char *output_end = kmalloc(sizeof(struct input_event), GFP_USER);
