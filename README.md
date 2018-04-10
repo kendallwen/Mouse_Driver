@@ -8,7 +8,7 @@ To initialize the device
 ```
 make
 sudo insmod KW_IA_Mouse_Driver.ko
-sudo ./device
+sudo ./driver
 ```
 The user will be prompted for the path to the mouse input file followed by the keyboard input file. Both these file paths can be found by using the command:
 ```
