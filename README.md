@@ -1,22 +1,6 @@
 # Mouse_Driver
 
-Linux mouse driver for any generic 5-button mouse. The mouse driver will allow for remapping of the mouse buttons to any other mouse button as well as any keyboard key. In order for the driver to work however, the mouse must be support keyboard actions. To ensure that the mouse supports keyboard events use the command:
-```
-cat /proc/bus/devices/inputs
-```
-Then proceed to check that the mouse Bus listings include the Handler kbd. As an example, the Razer DeathAdder mouse would have the listing:
-```
-I: Bus=0003 Vendor=1432 Product=0037 Version=0111
-N: Name="Razer Razer DeathAdder 2013"
-P: Phys=usb-0000:00:14.0-2/input2
-S: Sysfs=/devices/pci0000:00/0000:00:14.0/usb2/2-2/2-2:1.2/0003:1532:0037.0003/input/input9
-U: Uniq=
-H: Handlers= sysrq kbd event7
-B: PROP=0
-B: EV=100013
-B: KEY=1000000000007 ff9f207ac14057ff febeffdfffefffff fffffffffffffffe
-B: MSC=10
-```
+Linux mouse driver for any generic 5-button mouse. The mouse driver will allow for remapping of the mouse buttons to any other mouse button as well as any keyboard key.
 
 ## How to use
 
@@ -30,7 +14,7 @@ The user will be prompted for the path to the mouse input file followed by the k
 ```
 cat /proc/bus/input/devices
 ```
-All files will be stored in the /dev/input/ directory and the mouse file will include the handler mouse and the keyboard file will include the handler kbd.
+All files will be stored in the /dev/input/ directory and the mouse file will include the handler mouse and the keyboard file will include the handler kbd. Make sure to use the keyboard file with the lowest event number.
 
 ### Setting Mouse Buttons
 
